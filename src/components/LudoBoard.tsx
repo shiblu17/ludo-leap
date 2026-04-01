@@ -52,12 +52,12 @@ function isPathCell(r: number, c: number): boolean {
   return COMMON_PATH.some(([pr, pc]) => pr === r && pc === c);
 }
 
-// Dice position: which home base quadrant for each player
+// Dice beside each player's home base
 const DICE_POSITIONS: Record<PlayerColor, { top: string; left: string }> = {
-  green: { top: '2.5%', left: '2.5%' },
-  yellow: { top: '2.5%', left: '62.5%' },
-  red: { top: '62.5%', left: '2.5%' },
-  blue: { top: '62.5%', left: '62.5%' },
+  green: { top: '-1%', left: '43%' },
+  yellow: { top: '43%', left: '92%' },
+  red: { top: '50%', left: '-1%' },
+  blue: { top: '92%', left: '50%' },
 };
 
 const LudoBoard = ({
@@ -168,8 +168,6 @@ const LudoBoard = ({
   const diceOverlays = activePlayers.map(color => {
     const pos = DICE_POSITIONS[color];
     const isActive = color === currentPlayer;
-    const cellPct = 100 / 15;
-    const homeSize = 6 * cellPct;
 
     return (
       <div
@@ -178,12 +176,12 @@ const LudoBoard = ({
         style={{
           top: pos.top,
           left: pos.left,
-          width: `${homeSize}%`,
-          height: `${homeSize}%`,
+          width: 'clamp(40px, 8%, 56px)',
+          height: 'clamp(50px, 10%, 70px)',
           zIndex: isActive ? 30 : 3,
-          opacity: isActive ? 1 : 0.3,
+          opacity: isActive ? 1 : 0.25,
           pointerEvents: isActive ? 'auto' : 'none',
-          transform: isActive ? 'scale(1)' : 'scale(0.7)',
+          transform: isActive ? 'scale(1)' : 'scale(0.6)',
           transition: 'opacity 0.4s ease, transform 0.4s ease',
         }}
       >
