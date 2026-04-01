@@ -4,7 +4,6 @@ import {
   HOME_STRETCHES, HOME_POSITIONS, SAFE_ZONE_CELLS,
   COLOR_HEX, COLOR_LIGHT, COLOR_DARK, getTokenGridPos,
 } from '@/game/ludoData';
-import LudoDice from './LudoDice';
 
 interface LudoBoardProps {
   tokens: Record<PlayerColor, TokenState[]>;
@@ -13,12 +12,6 @@ interface LudoBoardProps {
   validMoveTokens: number[];
   currentPlayer: PlayerColor;
   onTokenClick: (color: PlayerColor, tokenId: number) => void;
-  // Dice props
-  diceValue: number;
-  isRolling: boolean;
-  canRoll: boolean;
-  onRoll: () => void;
-  onRollSix: () => void;
 }
 
 function getCellBg(r: number, c: number): string {
@@ -41,28 +34,12 @@ function isInHomeBase(r: number, c: number): boolean {
     (r >= 10 && r <= 13 && c >= 10 && c <= 13);
 }
 
-function getHomeSpotColor(r: number, c: number): PlayerColor | null {
-  for (const color of PLAYER_COLORS) {
-    if (HOME_POSITIONS[color].some(([hr, hc]) => hr === r && hc === c)) return color;
-  }
-  return null;
-}
-
 function isPathCell(r: number, c: number): boolean {
   return COMMON_PATH.some(([pr, pc]) => pr === r && pc === c);
 }
 
-// Dice beside each player's home base
-const DICE_POSITIONS: Record<PlayerColor, { top: string; left: string }> = {
-  green: { top: '-1%', left: '43%' },
-  yellow: { top: '43%', left: '92%' },
-  red: { top: '50%', left: '-1%' },
-  blue: { top: '92%', left: '50%' },
-};
-
 const LudoBoard = ({
   tokens, activePlayers, paths, validMoveTokens, currentPlayer, onTokenClick,
-  diceValue, isRolling, canRoll, onRoll, onRollSix,
 }: LudoBoardProps) => {
   const cells = useMemo(() => {
     const result = [];
@@ -84,19 +61,12 @@ const LudoBoard = ({
 
         let bg = bgType;
         let border = '0.5px solid rgba(0,0,0,0.08)';
-        if (inHomeBase) {
-          bg = '#FFFFFF';
-          border = 'none';
-        } else if (isPath || isHomeStretch) {
-          border = '0.5px solid rgba(0,0,0,0.12)';
-        }
+        if (inHomeBase) { bg = '#FFFFFF'; border = 'none'; }
+        else if (isPath || isHomeStretch) { border = '0.5px solid rgba(0,0,0,0.12)'; }
 
         result.push(
-          <div
-            key={`${r}-${c}`}
-            className="relative flex items-center justify-center"
-            style={{ backgroundColor: bg, border }}
-          >
+          <div key={`${r}-${c}`} className="relative flex items-center justify-center"
+            style={{ backgroundColor: bg, border }}>
             {isSafe && (
               <span className="absolute text-amber-400 font-bold select-none drop-shadow-sm"
                 style={{ fontSize: 'clamp(7px, 2vw, 18px)' }}>★</span>
@@ -112,10 +82,7 @@ const LudoBoard = ({
     const cellPct = 100 / 15;
     return (
       <div className="absolute overflow-hidden"
-        style={{
-          top: `${cellPct * 6}%`, left: `${cellPct * 6}%`,
-          width: `${cellPct * 3}%`, height: `${cellPct * 3}%`, zIndex: 5,
-        }}>
+        style={{ top: `${cellPct * 6}%`, left: `${cellPct * 6}%`, width: `${cellPct * 3}%`, height: `${cellPct * 3}%`, zIndex: 5 }}>
         <svg viewBox="0 0 100 100" width="100%" height="100%">
           <polygon points="0,0 50,50 0,100" fill={COLOR_HEX.green} />
           <polygon points="0,0 100,0 50,50" fill={COLOR_HEX.yellow} />
@@ -129,24 +96,19 @@ const LudoBoard = ({
     );
   }, []);
 
-  // Home base white boxes with token spots
   const homeBaseOverlays = useMemo(() => {
     const cellPct = 100 / 15;
     const bases: { r: number; c: number; color: PlayerColor }[] = [
-      { r: 0, c: 0, color: 'green' },
-      { r: 0, c: 9, color: 'yellow' },
-      { r: 9, c: 0, color: 'red' },
-      { r: 9, c: 9, color: 'blue' },
+      { r: 0, c: 0, color: 'green' }, { r: 0, c: 9, color: 'yellow' },
+      { r: 9, c: 0, color: 'red' }, { r: 9, c: 9, color: 'blue' },
     ];
     return bases.map(({ r, c, color }) => (
       <div key={`home-${color}`} className="absolute"
         style={{
           top: `${(r + 1) * cellPct + 0.3}%`, left: `${(c + 1) * cellPct + 0.3}%`,
           width: `${4 * cellPct - 0.6}%`, height: `${4 * cellPct - 0.6}%`,
-          backgroundColor: '#FFFFFF',
-          borderRadius: 'clamp(4px, 1.5vw, 12px)',
-          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1)',
-          zIndex: 2,
+          backgroundColor: '#FFFFFF', borderRadius: 'clamp(4px, 1.5vw, 12px)',
+          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1)', zIndex: 2,
           display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr',
           gap: 'clamp(2px, 0.8vw, 8px)', padding: 'clamp(4px, 1.5vw, 16px)',
         }}>
@@ -154,48 +116,13 @@ const LudoBoard = ({
           <div key={i} className="rounded-full"
             style={{
               background: `radial-gradient(circle at 35% 35%, ${COLOR_LIGHT[color]}, ${COLOR_HEX[color]})`,
-              border: `2px solid ${COLOR_DARK[color]}`,
-              opacity: 0.3,
+              border: `2px solid ${COLOR_DARK[color]}`, opacity: 0.3,
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.15)',
-            }}
-          />
+            }} />
         ))}
       </div>
     ));
   }, []);
-
-  // Dice overlays on home bases
-  const diceOverlays = activePlayers.map(color => {
-    const pos = DICE_POSITIONS[color];
-    const isActive = color === currentPlayer;
-
-    return (
-      <div
-        key={`dice-${color}`}
-        className="absolute flex items-center justify-center transition-all duration-500"
-        style={{
-          top: pos.top,
-          left: pos.left,
-          width: 'clamp(40px, 8%, 56px)',
-          height: 'clamp(50px, 10%, 70px)',
-          zIndex: isActive ? 30 : 3,
-          opacity: isActive ? 1 : 0.25,
-          pointerEvents: isActive ? 'auto' : 'none',
-          transform: isActive ? 'scale(1)' : 'scale(0.6)',
-          transition: 'opacity 0.4s ease, transform 0.4s ease',
-        }}
-      >
-        <LudoDice
-          value={diceValue}
-          color={color}
-          isRolling={isActive && isRolling}
-          canRoll={isActive && canRoll}
-          onRoll={onRoll}
-          onRollSix={onRollSix}
-        />
-      </div>
-    );
-  });
 
   const tokenElements = (() => {
     const posMap = new Map<string, { token: TokenState; pos: [number, number] }[]>();
@@ -228,13 +155,11 @@ const LudoBoard = ({
         let offR = 0, offC = 0;
         if (group.length > 1) {
           const off = offsets4[idx % 4];
-          offR = off[0] * cellPct;
-          offC = off[1] * cellPct;
+          offR = off[0] * cellPct; offC = off[1] * cellPct;
         }
 
         elements.push(
-          <div
-            key={`t-${token.color}-${token.id}-${token.pathIndex}`}
+          <div key={`t-${token.color}-${token.id}-${token.pathIndex}`}
             className={`absolute rounded-full ${isMovable ? 'cursor-pointer' : 'cursor-default'}`}
             style={{
               top: `${r * cellPct + (1 - sz) * cellPct / 2 + offR}%`,
@@ -256,8 +181,7 @@ const LudoBoard = ({
               style={{
                 top: '15%', left: '15%', width: '35%', height: '35%',
                 background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%)',
-              }}
-            />
+              }} />
           </div>
         );
       });
@@ -266,22 +190,18 @@ const LudoBoard = ({
   })();
 
   return (
-    <div className="relative w-full mx-auto" style={{ aspectRatio: '1', maxWidth: '600px' }}>
+    <div className="relative w-full" style={{ aspectRatio: '1' }}>
       <div className="absolute inset-0 rounded-2xl overflow-hidden"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(15, 1fr)',
-          gridTemplateRows: 'repeat(15, 1fr)',
+          display: 'grid', gridTemplateColumns: 'repeat(15, 1fr)', gridTemplateRows: 'repeat(15, 1fr)',
           border: '4px solid #5D4037',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2), inset 0 0 0 2px rgba(255,255,255,0.1)',
-          background: '#F5F0E8',
-          borderRadius: 'clamp(8px, 2vw, 20px)',
+          background: '#F5F0E8', borderRadius: 'clamp(8px, 2vw, 20px)',
         }}>
         {cells}
       </div>
       {homeBaseOverlays}
       {centerOverlay}
-      {diceOverlays}
       {tokenElements}
     </div>
   );

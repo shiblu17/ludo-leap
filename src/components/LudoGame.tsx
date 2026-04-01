@@ -5,6 +5,7 @@ import {
 } from '@/game/ludoData';
 import { playPop, playCapture, playFanfare } from '@/game/sounds';
 import LudoBoard from './LudoBoard';
+import PlayerPanel from './PlayerPanel';
 import { Button } from '@/components/ui/button';
 
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
@@ -252,25 +253,33 @@ const LudoGame = () => {
         <Button variant="outline" size="sm" onClick={restartGame}>New Game</Button>
       </div>
 
-      {/* Turn indicator */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-5 h-5 rounded-full shadow-md"
-          style={{ backgroundColor: COLOR_HEX[currentPlayer] }} />
-        <span className="font-semibold capitalize text-foreground">
-          {currentPlayer}'s Turn
-        </span>
-        {consecutiveSixes > 0 && (
-          <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-            🔥 {consecutiveSixes}× six
-          </span>
-        )}
-        {diceRolled && validMoves.length === 0 && (
-          <span className="text-sm text-muted-foreground italic">(No moves — passing...)</span>
-        )}
-      </div>
+      {/* Game layout: panels around board */}
+      <div className="w-full flex flex-col items-center" style={{ maxWidth: 'min(600px, 95vmin)' }}>
+        {/* Top panel: Yellow (top-right of board) */}
+        <div className="w-full flex justify-between items-end mb-1 px-1">
+          <PlayerPanel
+            color="green" position="top"
+            finished={tokens.green.filter(t => t.pathIndex === 57).length}
+            isActive={currentPlayer === 'green'}
+            diceValue={diceDisplay} isRolling={isRolling}
+            canRoll={currentPlayer === 'green' && !diceRolled && !isRolling && !isMoving && !winner}
+            onRoll={rollDice} onRollSix={rollSix}
+            consecutiveSixes={currentPlayer === 'green' ? consecutiveSixes : 0}
+            noMoves={currentPlayer === 'green' && diceRolled && validMoves.length === 0}
+          />
+          <PlayerPanel
+            color="yellow" position="top"
+            finished={tokens.yellow.filter(t => t.pathIndex === 57).length}
+            isActive={currentPlayer === 'yellow'}
+            diceValue={diceDisplay} isRolling={isRolling}
+            canRoll={currentPlayer === 'yellow' && !diceRolled && !isRolling && !isMoving && !winner}
+            onRoll={rollDice} onRollSix={rollSix}
+            consecutiveSixes={currentPlayer === 'yellow' ? consecutiveSixes : 0}
+            noMoves={currentPlayer === 'yellow' && diceRolled && validMoves.length === 0}
+          />
+        </div>
 
-      {/* Board with integrated dice */}
-      <div className="w-full flex justify-center" style={{ maxWidth: '95vmin' }}>
+        {/* Board */}
         <LudoBoard
           tokens={tokens}
           activePlayers={activePlayers}
@@ -278,36 +287,37 @@ const LudoGame = () => {
           validMoveTokens={validMoves}
           currentPlayer={currentPlayer}
           onTokenClick={handleTokenClick}
-          diceValue={diceDisplay}
-          isRolling={isRolling}
-          canRoll={!diceRolled && !isRolling && !isMoving && !winner}
-          onRoll={rollDice}
-          onRollSix={rollSix}
         />
-      </div>
 
-      {diceRolled && validMoves.length > 0 && !isMoving && (
-        <p className="text-sm text-muted-foreground animate-pulse mt-2">
-          Tap a glowing token to move
-        </p>
-      )}
+        {/* Bottom panel: Red & Blue */}
+        <div className="w-full flex justify-between items-start mt-1 px-1">
+          <PlayerPanel
+            color="red" position="bottom"
+            finished={tokens.red.filter(t => t.pathIndex === 57).length}
+            isActive={currentPlayer === 'red'}
+            diceValue={diceDisplay} isRolling={isRolling}
+            canRoll={currentPlayer === 'red' && !diceRolled && !isRolling && !isMoving && !winner}
+            onRoll={rollDice} onRollSix={rollSix}
+            consecutiveSixes={currentPlayer === 'red' ? consecutiveSixes : 0}
+            noMoves={currentPlayer === 'red' && diceRolled && validMoves.length === 0}
+          />
+          <PlayerPanel
+            color="blue" position="bottom"
+            finished={tokens.blue.filter(t => t.pathIndex === 57).length}
+            isActive={currentPlayer === 'blue'}
+            diceValue={diceDisplay} isRolling={isRolling}
+            canRoll={currentPlayer === 'blue' && !diceRolled && !isRolling && !isMoving && !winner}
+            onRoll={rollDice} onRollSix={rollSix}
+            consecutiveSixes={currentPlayer === 'blue' ? consecutiveSixes : 0}
+            noMoves={currentPlayer === 'blue' && diceRolled && validMoves.length === 0}
+          />
+        </div>
 
-      {/* Score strip */}
-      <div className="mt-4 flex gap-3">
-        {activePlayers.map(color => {
-          const finished = tokens[color].filter(t => t.pathIndex === 57).length;
-          return (
-            <div key={color} className="flex items-center gap-1.5 px-3 py-1 rounded-full"
-              style={{
-                backgroundColor: COLOR_HEX[color] + '22',
-                border: currentPlayer === color ? `2px solid ${COLOR_HEX[color]}` : '2px solid transparent',
-              }}>
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLOR_HEX[color] }} />
-              <span className="text-xs font-semibold capitalize">{color}</span>
-              <span className="text-xs text-muted-foreground">{finished}/4</span>
-            </div>
-          );
-        })}
+        {diceRolled && validMoves.length > 0 && !isMoving && (
+          <p className="text-sm text-muted-foreground animate-pulse mt-2">
+            Tap a glowing token to move
+          </p>
+        )}
       </div>
 
       {/* Winner overlay */}
