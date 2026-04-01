@@ -52,14 +52,12 @@ function isPathCell(r: number, c: number): boolean {
   return COMMON_PATH.some(([pr, pc]) => pr === r && pc === c);
 }
 
-// Dice position: placed beside each player's home base in the path corridor
-// Green (top-left) → right side, Yellow (top-right) → bottom side
-// Red (bottom-left) → top side, Blue (bottom-right) → left side
+// Dice beside each player's home base — placed in the path corridor next to base
 const DICE_POSITIONS: Record<PlayerColor, { top: string; left: string }> = {
-  green: { top: '1%', left: '41%' },    // right of green base, in top path corridor
-  yellow: { top: '41%', left: '93%' },   // below yellow base, in right path corridor  
-  red: { top: '55%', left: '1%' },       // above red base, in left path corridor
-  blue: { top: '93%', left: '55%' },     // left of blue base, in bottom path corridor
+  green: { top: '3%', left: '42%' },     // top-center, right of green base
+  yellow: { top: '42%', left: '90%' },    // right-center, below yellow base
+  red: { top: '54%', left: '3%' },        // left-center, above red base
+  blue: { top: '90%', left: '54%' },      // bottom-center, left of blue base
 };
 
 const LudoBoard = ({
