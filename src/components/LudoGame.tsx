@@ -316,13 +316,23 @@ const LudoGame = () => {
         </div>
 
         {!diceRolled && !isRolling && !isMoving && !winner && (
-          <Button
-            onClick={rollDice}
-            className="text-white font-semibold px-6"
-            style={{ backgroundColor: COLOR_HEX[currentPlayer] }}
-          >
-            Roll Dice
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={rollDice}
+              className="text-white font-semibold px-6"
+              style={{ backgroundColor: COLOR_HEX[currentPlayer] }}
+            >
+              🎲 Roll Dice
+            </Button>
+            <Button
+              onClick={rollSix}
+              variant="outline"
+              className="font-semibold px-4 border-2"
+              style={{ borderColor: COLOR_HEX[currentPlayer], color: COLOR_HEX[currentPlayer] }}
+            >
+              6️⃣ Roll 6
+            </Button>
+          </div>
         )}
 
         {diceRolled && validMoves.length > 0 && !isMoving && (
