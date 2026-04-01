@@ -9,15 +9,6 @@ import { Button } from '@/components/ui/button';
 
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
-const DICE_DOTS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [[28, 72], [72, 28]],
-  3: [[28, 72], [50, 50], [72, 28]],
-  4: [[28, 28], [28, 72], [72, 28], [72, 72]],
-  5: [[28, 28], [28, 72], [50, 50], [72, 28], [72, 72]],
-  6: [[28, 22], [28, 50], [28, 78], [72, 22], [72, 50], [72, 78]],
-};
-
 const LudoGame = () => {
   const [mode, setMode] = useState<2 | 4 | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>('green');
@@ -278,7 +269,7 @@ const LudoGame = () => {
         )}
       </div>
 
-      {/* Board */}
+      {/* Board with integrated dice */}
       <div className="w-full flex justify-center" style={{ maxWidth: '95vmin' }}>
         <LudoBoard
           tokens={tokens}
@@ -287,60 +278,19 @@ const LudoGame = () => {
           validMoveTokens={validMoves}
           currentPlayer={currentPlayer}
           onTokenClick={handleTokenClick}
+          diceValue={diceDisplay}
+          isRolling={isRolling}
+          canRoll={!diceRolled && !isRolling && !isMoving && !winner}
+          onRoll={rollDice}
+          onRollSix={rollSix}
         />
       </div>
 
-      {/* Dice area */}
-      <div className="mt-4 flex flex-col items-center gap-3">
-        <div
-          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl relative ${isRolling ? 'animate-dice-roll' : ''}`}
-          style={{
-            backgroundColor: '#fff',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            border: `3px solid ${COLOR_HEX[currentPlayer]}`,
-            cursor: (!diceRolled && !isRolling && !isMoving && !winner) ? 'pointer' : 'default',
-          }}
-          onClick={rollDice}
-        >
-          {DICE_DOTS[diceDisplay]?.map(([top, left], i) => (
-            <div
-              key={i}
-              className="absolute w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
-              style={{
-                top: `${top}%`, left: `${left}%`,
-                transform: 'translate(-50%, -50%)',
-                backgroundColor: '#1a1a1a',
-              }}
-            />
-          ))}
-        </div>
-
-        {!diceRolled && !isRolling && !isMoving && !winner && (
-          <div className="flex gap-2">
-            <Button
-              onClick={rollDice}
-              className="text-white font-semibold px-6"
-              style={{ backgroundColor: COLOR_HEX[currentPlayer] }}
-            >
-              🎲 Roll Dice
-            </Button>
-            <Button
-              onClick={rollSix}
-              variant="outline"
-              className="font-semibold px-4 border-2"
-              style={{ borderColor: COLOR_HEX[currentPlayer], color: COLOR_HEX[currentPlayer] }}
-            >
-              6️⃣ Roll 6
-            </Button>
-          </div>
-        )}
-
-        {diceRolled && validMoves.length > 0 && !isMoving && (
-          <p className="text-sm text-muted-foreground animate-pulse">
-            Tap a glowing token to move
-          </p>
-        )}
-      </div>
+      {diceRolled && validMoves.length > 0 && !isMoving && (
+        <p className="text-sm text-muted-foreground animate-pulse mt-2">
+          Tap a glowing token to move
+        </p>
+      )}
 
       {/* Score strip */}
       <div className="mt-4 flex gap-3">
