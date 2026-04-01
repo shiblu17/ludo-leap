@@ -86,7 +86,7 @@ const LudoGame = () => {
     }
   }, [diceRolled, diceValue, isMoving, isRolling, winner, validMoves, advancePlayer]);
 
-  const rollDice = useCallback(() => {
+  const rollDiceWithValue = useCallback((forcedValue?: number) => {
     if (isRolling || isMoving || diceRolled || winner) return;
     setIsRolling(true);
     let count = 0;
@@ -95,7 +95,7 @@ const LudoGame = () => {
       count++;
       if (count >= 10) {
         clearInterval(interval);
-        const value = Math.floor(Math.random() * 6) + 1;
+        const value = forcedValue ?? (Math.floor(Math.random() * 6) + 1);
         setDiceValue(value);
         setDisplayDice(value);
         setDiceRolled(true);
@@ -103,6 +103,9 @@ const LudoGame = () => {
       }
     }, 60);
   }, [isRolling, isMoving, diceRolled, winner]);
+
+  const rollDice = useCallback(() => rollDiceWithValue(), [rollDiceWithValue]);
+  const rollSix = useCallback(() => rollDiceWithValue(6), [rollDiceWithValue]);
 
   const handleTokenClick = useCallback(async (color: PlayerColor, tokenId: number) => {
     if (isMoving || !diceRolled || diceValue === null || winner) return;
@@ -313,13 +316,23 @@ const LudoGame = () => {
         </div>
 
         {!diceRolled && !isRolling && !isMoving && !winner && (
-          <Button
-            onClick={rollDice}
-            className="text-white font-semibold px-6"
-            style={{ backgroundColor: COLOR_HEX[currentPlayer] }}
-          >
-            Roll Dice
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={rollDice}
+              className="text-white font-semibold px-6"
+              style={{ backgroundColor: COLOR_HEX[currentPlayer] }}
+            >
+              🎲 Roll Dice
+            </Button>
+            <Button
+              onClick={rollSix}
+              variant="outline"
+              className="font-semibold px-4 border-2"
+              style={{ borderColor: COLOR_HEX[currentPlayer], color: COLOR_HEX[currentPlayer] }}
+            >
+              6️⃣ Roll 6
+            </Button>
+          </div>
         )}
 
         {diceRolled && validMoves.length > 0 && !isMoving && (
