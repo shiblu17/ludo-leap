@@ -7,6 +7,15 @@ import { playPop, playCapture, playFanfare } from '@/game/sounds';
 import LudoBoard from './LudoBoard';
 import { Button } from '@/components/ui/button';
 
+const DICE_DOTS: Record<number, [number, number][]> = {
+  1: [[50, 50]],
+  2: [[28, 72], [72, 28]],
+  3: [[28, 72], [50, 50], [72, 28]],
+  4: [[28, 28], [28, 72], [72, 28], [72, 72]],
+  5: [[28, 28], [28, 72], [50, 50], [72, 28], [72, 72]],
+  6: [[28, 22], [28, 50], [28, 78], [72, 22], [72, 50], [72, 78]],
+};
+
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 const DICE_DOTS: Record<number, [number, number][]> = {
