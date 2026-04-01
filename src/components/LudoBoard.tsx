@@ -54,10 +54,10 @@ function isPathCell(r: number, c: number): boolean {
 
 // Dice beside each player's home base
 const DICE_POSITIONS: Record<PlayerColor, { top: string; left: string }> = {
-  green: { top: '2%', left: '41.5%' },
-  yellow: { top: '41.5%', left: '86%' },
-  red: { top: '55%', left: '5%' },
-  blue: { top: '86%', left: '55%' },
+  green: { top: '2%', left: '41%' },
+  yellow: { top: '41%', left: '82%' },
+  red: { top: '55%', left: '6%' },
+  blue: { top: '82%', left: '55%' },
 };
 
 const LudoBoard = ({
