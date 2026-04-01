@@ -170,8 +170,6 @@ const LudoBoard = ({
   const diceOverlays = activePlayers.map(color => {
     const pos = DICE_POSITIONS[color];
     const isActive = color === currentPlayer;
-    const cellPct = 100 / 15;
-    const homeSize = 6 * cellPct;
 
     return (
       <div
@@ -180,12 +178,12 @@ const LudoBoard = ({
         style={{
           top: pos.top,
           left: pos.left,
-          width: `${homeSize}%`,
-          height: `${homeSize}%`,
+          width: 'clamp(40px, 8%, 56px)',
+          height: 'clamp(50px, 10%, 70px)',
           zIndex: isActive ? 30 : 3,
-          opacity: isActive ? 1 : 0.3,
+          opacity: isActive ? 1 : 0.25,
           pointerEvents: isActive ? 'auto' : 'none',
-          transform: isActive ? 'scale(1)' : 'scale(0.7)',
+          transform: isActive ? 'scale(1)' : 'scale(0.6)',
           transition: 'opacity 0.4s ease, transform 0.4s ease',
         }}
       >
