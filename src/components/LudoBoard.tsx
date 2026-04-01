@@ -14,29 +14,45 @@ interface LudoBoardProps {
   onTokenClick: (color: PlayerColor, tokenId: number) => void;
 }
 
+// Entry point arrows positions and rotations
+const ENTRY_ARROWS: { r: number; c: number; rotation: string; color: PlayerColor }[] = [
+  { r: 13, c: 6, rotation: '0deg', color: 'red' },    // Red enters going up
+  { r: 6, c: 1, rotation: '90deg', color: 'green' },   // Green enters going right (adjusted below)
+  { r: 1, c: 8, rotation: '180deg', color: 'yellow' },  // Yellow enters going down
+  { r: 8, c: 13, rotation: '270deg', color: 'blue' },   // Blue enters going left
+];
+
 function getCellBg(r: number, c: number): string {
-  if (r < 6 && c < 6) return (r >= 1 && r <= 4 && c >= 1 && c <= 4) ? '#ffffff' : COLOR_HEX.green;
-  if (r < 6 && c > 8) return (r >= 1 && r <= 4 && c >= 10 && c <= 13) ? '#ffffff' : COLOR_HEX.yellow;
-  if (r > 8 && c < 6) return (r >= 10 && r <= 13 && c >= 1 && c <= 4) ? '#ffffff' : COLOR_HEX.red;
-  if (r > 8 && c > 8) return (r >= 10 && r <= 13 && c >= 10 && c <= 13) ? '#ffffff' : COLOR_HEX.blue;
+  // Home bases - outer area
+  if (r < 6 && c < 6) return COLOR_HEX.green;
+  if (r < 6 && c > 8) return COLOR_HEX.yellow;
+  if (r > 8 && c < 6) return COLOR_HEX.red;
+  if (r > 8 && c > 8) return COLOR_HEX.blue;
 
-  if (r >= 6 && r <= 8 && c >= 6 && c <= 8) {
-    if (r === 7 && c === 7) return '#f5f5f5';
-    if (r === 6 && c === 6) return COLOR_HEX.green;
-    if (r === 6 && c === 7) return COLOR_HEX.yellow;
-    if (r === 6 && c === 8) return COLOR_HEX.yellow;
-    if (r === 7 && c === 6) return COLOR_HEX.green;
-    if (r === 7 && c === 8) return COLOR_HEX.blue;
-    if (r === 8 && c === 6) return COLOR_HEX.red;
-    if (r === 8 && c === 7) return COLOR_HEX.red;
-    if (r === 8 && c === 8) return COLOR_HEX.blue;
-  }
+  // Center 3x3
+  if (r >= 6 && r <= 8 && c >= 6 && c <= 8) return 'center';
 
+  // Home stretches
   for (const color of PLAYER_COLORS) {
     if (HOME_STRETCHES[color].some(([hr, hc]) => hr === r && hc === c))
       return COLOR_LIGHT[color];
   }
-  return '#ffffff';
+  return '#FFFFFF';
+}
+
+function isInHomeBase(r: number, c: number): boolean {
+  return (r >= 1 && r <= 4 && c >= 1 && c <= 4) ||
+    (r >= 1 && r <= 4 && c >= 10 && c <= 13) ||
+    (r >= 10 && r <= 13 && c >= 1 && c <= 4) ||
+    (r >= 10 && r <= 13 && c >= 10 && c <= 13);
+}
+
+function getHomeBaseColor(r: number, c: number): PlayerColor | null {
+  if (r >= 1 && r <= 4 && c >= 1 && c <= 4) return 'green';
+  if (r >= 1 && r <= 4 && c >= 10 && c <= 13) return 'yellow';
+  if (r >= 10 && r <= 13 && c >= 1 && c <= 4) return 'red';
+  if (r >= 10 && r <= 13 && c >= 10 && c <= 13) return 'blue';
+  return null;
 }
 
 function getHomeSpotColor(r: number, c: number): PlayerColor | null {
@@ -57,13 +73,37 @@ const LudoBoard = ({
     const result = [];
     for (let r = 0; r < 15; r++) {
       for (let c = 0; c < 15; c++) {
-        const bg = getCellBg(r, c);
+        const bgType = getCellBg(r, c);
         const isSafe = SAFE_ZONE_CELLS.has(`${r},${c}`);
         const homeSpot = getHomeSpotColor(r, c);
         const isPath = isPathCell(r, c);
+        const inHomeBase = isInHomeBase(r, c);
+        const homeBaseColor = getHomeBaseColor(r, c);
         const isHomeStretch = PLAYER_COLORS.some(col =>
           HOME_STRETCHES[col].some(([hr, hc]) => hr === r && hc === c)
         );
+        const isCenter = bgType === 'center';
+
+        // Entry arrow check
+        const entryArrow = ENTRY_ARROWS.find(a => a.r === r && a.c === c);
+
+        // Skip center cells - we'll render an overlay
+        if (isCenter) {
+          result.push(
+            <div key={`${r}-${c}`} className="relative" />
+          );
+          continue;
+        }
+
+        let bg = bgType;
+        let border = '0.5px solid rgba(0,0,0,0.08)';
+
+        if (inHomeBase) {
+          bg = '#FFFFFF';
+          border = 'none';
+        } else if (isPath || isHomeStretch) {
+          border = '0.5px solid rgba(0,0,0,0.12)';
+        }
 
         result.push(
           <div
@@ -71,16 +111,36 @@ const LudoBoard = ({
             className="relative flex items-center justify-center"
             style={{
               backgroundColor: bg,
-              border: (isPath || isHomeStretch) ? '0.5px solid rgba(0,0,0,0.15)' : '0.5px solid rgba(0,0,0,0.05)',
+              border,
+              borderRadius: inHomeBase ? '2px' : undefined,
             }}
           >
+            {/* Safe zone star */}
             {isSafe && (
-              <span className="absolute text-amber-500 font-bold select-none"
-                style={{ fontSize: 'clamp(6px, 1.8vw, 16px)' }}>★</span>
+              <span className="absolute text-amber-400 font-bold select-none drop-shadow-sm"
+                style={{ fontSize: 'clamp(7px, 2vw, 18px)' }}>★</span>
             )}
+
+            {/* Home base token spots */}
             {homeSpot && (
-              <div className="w-3/5 h-3/5 rounded-full"
-                style={{ border: `2px solid ${COLOR_HEX[homeSpot]}`, opacity: 0.3 }} />
+              <div className="w-[65%] h-[65%] rounded-full shadow-inner"
+                style={{
+                  background: `radial-gradient(circle at 40% 40%, ${COLOR_LIGHT[homeSpot]}, ${COLOR_HEX[homeSpot]})`,
+                  border: `2px solid ${COLOR_DARK[homeSpot]}`,
+                  opacity: 0.35,
+                }}
+              />
+            )}
+
+            {/* Entry arrows */}
+            {entryArrow && (
+              <span className="absolute select-none"
+                style={{
+                  fontSize: 'clamp(6px, 1.5vw, 14px)',
+                  color: COLOR_DARK[entryArrow.color],
+                  transform: `rotate(${entryArrow.rotation})`,
+                  opacity: 0.7,
+                }}>▲</span>
             )}
           </div>
         );
@@ -89,12 +149,98 @@ const LudoBoard = ({
     return result;
   }, []);
 
+  // Center overlay with 4 colored triangles
+  const centerOverlay = useMemo(() => {
+    const cellPct = 100 / 15;
+    const size = cellPct * 3;
+    const top = cellPct * 6;
+    const left = cellPct * 6;
+
+    return (
+      <div
+        className="absolute overflow-hidden"
+        style={{
+          top: `${top}%`,
+          left: `${left}%`,
+          width: `${size}%`,
+          height: `${size}%`,
+          zIndex: 5,
+        }}
+      >
+        <svg viewBox="0 0 100 100" width="100%" height="100%">
+          {/* Green triangle - left */}
+          <polygon points="0,0 50,50 0,100" fill={COLOR_HEX.green} />
+          {/* Yellow triangle - top */}
+          <polygon points="0,0 100,0 50,50" fill={COLOR_HEX.yellow} />
+          {/* Blue triangle - right */}
+          <polygon points="100,0 100,100 50,50" fill={COLOR_HEX.blue} />
+          {/* Red triangle - bottom */}
+          <polygon points="0,100 50,50 100,100" fill={COLOR_HEX.red} />
+          {/* Center circle */}
+          <circle cx="50" cy="50" r="12" fill="white" stroke="#ddd" strokeWidth="1" />
+          {/* Border lines */}
+          <line x1="0" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+          <line x1="100" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+        </svg>
+      </div>
+    );
+  }, []);
+
+  // Home base white rounded boxes
+  const homeBaseOverlays = useMemo(() => {
+    const cellPct = 100 / 15;
+    const bases: { r: number; c: number; color: PlayerColor }[] = [
+      { r: 0, c: 0, color: 'green' },
+      { r: 0, c: 9, color: 'yellow' },
+      { r: 9, c: 0, color: 'red' },
+      { r: 9, c: 9, color: 'blue' },
+    ];
+
+    return bases.map(({ r, c, color }) => {
+      const innerR = r + 1;
+      const innerC = c + 1;
+      return (
+        <div
+          key={`home-${color}`}
+          className="absolute"
+          style={{
+            top: `${innerR * cellPct + 0.3}%`,
+            left: `${innerC * cellPct + 0.3}%`,
+            width: `${4 * cellPct - 0.6}%`,
+            height: `${4 * cellPct - 0.6}%`,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 'clamp(4px, 1.5vw, 12px)',
+            boxShadow: `inset 0 2px 8px rgba(0,0,0,0.1)`,
+            zIndex: 2,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+            gap: 'clamp(2px, 0.8vw, 8px)',
+            padding: 'clamp(4px, 1.5vw, 16px)',
+          }}
+        >
+          {[0, 1, 2, 3].map(i => (
+            <div
+              key={i}
+              className="rounded-full"
+              style={{
+                background: `radial-gradient(circle at 35% 35%, ${COLOR_LIGHT[color]}, ${COLOR_HEX[color]})`,
+                border: `2px solid ${COLOR_DARK[color]}`,
+                opacity: 0.3,
+                boxShadow: `inset 0 1px 3px rgba(0,0,0,0.15)`,
+              }}
+            />
+          ))}
+        </div>
+      );
+    });
+  }, []);
+
   const tokenElements = (() => {
     const posMap = new Map<string, { token: TokenState; pos: [number, number] }[]>();
     for (const color of activePlayers) {
       for (const token of tokens[color]) {
         if (token.pathIndex === 57) {
-          // Show finished tokens at center
           const pos: [number, number] = [7, 7];
           const key = `${pos[0]},${pos[1]}`;
           if (!posMap.has(key)) posMap.set(key, []);
@@ -128,22 +274,33 @@ const LudoBoard = ({
         elements.push(
           <div
             key={`t-${token.color}-${token.id}-${token.pathIndex}`}
-            className={`absolute rounded-full ${isMovable ? 'ring-2 ring-white cursor-pointer' : 'cursor-default'}`}
+            className={`absolute rounded-full ${isMovable ? 'cursor-pointer' : 'cursor-default'}`}
             style={{
               top: `${r * cellPct + (1 - sz) * cellPct / 2 + offR}%`,
               left: `${c * cellPct + (1 - sz) * cellPct / 2 + offC}%`,
               width: `${sz * cellPct}%`,
               height: `${sz * cellPct}%`,
-              background: `radial-gradient(circle at 35% 35%, ${COLOR_LIGHT[token.color]}, ${COLOR_HEX[token.color]}, ${COLOR_DARK[token.color]})`,
+              background: `radial-gradient(circle at 30% 30%, ${COLOR_LIGHT[token.color]} 0%, ${COLOR_HEX[token.color]} 50%, ${COLOR_DARK[token.color]} 100%)`,
               boxShadow: isMovable
-                ? `0 0 8px 2px ${COLOR_HEX[token.color]}, 0 2px 4px rgba(0,0,0,0.3)`
-                : '0 2px 4px rgba(0,0,0,0.3)',
+                ? `0 0 10px 3px ${COLOR_HEX[token.color]}, 0 0 20px 5px ${COLOR_HEX[token.color]}44, 0 3px 6px rgba(0,0,0,0.3)`
+                : `0 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)`,
+              border: `2px solid ${COLOR_DARK[token.color]}`,
               zIndex: isMovable ? 20 : 10,
               animation: 'token-bounce 0.3s ease-out',
-              transition: 'box-shadow 0.2s',
+              transition: 'box-shadow 0.2s, transform 0.2s',
+              transform: isMovable ? 'scale(1.1)' : 'scale(1)',
             }}
             onClick={() => isMovable && onTokenClick(token.color, token.id)}
-          />
+          >
+            {/* Inner highlight */}
+            <div className="absolute rounded-full"
+              style={{
+                top: '15%', left: '15%',
+                width: '35%', height: '35%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%)',
+              }}
+            />
+          </div>
         );
       });
     });
@@ -153,16 +310,21 @@ const LudoBoard = ({
   return (
     <div className="relative w-full mx-auto" style={{ aspectRatio: '1', maxWidth: '600px' }}>
       <div
-        className="absolute inset-0 rounded-lg overflow-hidden shadow-xl"
+        className="absolute inset-0 rounded-2xl overflow-hidden"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(15, 1fr)',
           gridTemplateRows: 'repeat(15, 1fr)',
-          border: '3px solid #333',
+          border: '4px solid #5D4037',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2), inset 0 0 0 2px rgba(255,255,255,0.1)',
+          background: '#F5F0E8',
+          borderRadius: 'clamp(8px, 2vw, 20px)',
         }}
       >
         {cells}
       </div>
+      {homeBaseOverlays}
+      {centerOverlay}
       {tokenElements}
     </div>
   );
