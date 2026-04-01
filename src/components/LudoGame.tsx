@@ -5,6 +5,7 @@ import {
 } from '@/game/ludoData';
 import { playPop, playCapture, playFanfare } from '@/game/sounds';
 import LudoBoard from './LudoBoard';
+import PlayerPanel from './PlayerPanel';
 import { Button } from '@/components/ui/button';
 
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
